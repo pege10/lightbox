@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<title>Lightbox – DSLR film szkennelés</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="description" content="A telefon kijelzője átvilágító padként analóg film DSLR-es szkenneléséhez. Ébren tartott képernyő, színprofilok, RGB finomhangolás.">
+<meta name="theme-color" content="#ffffff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lightbox">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>
+  :root {
+    --panel: rgba(14, 14, 17, .92);
+    --line: #2c2c34;
+    --chip: #23232b;
+    --text: #f4f4f6;
+    --muted: #9c9ca6;
+    --ok: #7bd48a;
+    --warn: #e6a86a;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    height: 100%; width: 100%;
+    background: #fff;
+    overflow: hidden;
+    overscroll-behavior: none;
+    touch-action: manipulation;
+    -webkit-user-select: none; user-select: none;
+    -webkit-text-size-adjust: 100%;
+    font: 15px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--text);
+  }
+
+  /* ------- az UI réteg, ami 3 mp után elhalványul ------- */
+  #ui {
+    position: fixed; inset: 0;
+    display: flex; align-items: flex-end; justify-content: center;
+    padding: calc(env(safe-area-inset-top) + 16px) calc(env(safe-area-inset-right) + 14px)
+             calc(env(safe-area-inset-bottom) + 16px) calc(env(safe-area-inset-left) + 14px);
+    opacity: 1;
+    transition: opacity .6s ease;
+    z-index: 10;
+  }
+  body.hidden-ui #ui { opacity: 0; pointer-events: none; }
+
+  #panel {
+    width: 100%; max-width: 430px;
+    background: var(--panel);
+    -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 16px;
+    box-shadow: 0 18px 44px rgba(0,0,0,.35);
+    max-height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+  .head h1 { font-size: 15px; font-weight: 600; margin: 0; letter-spacing: .2px; }
+  #status { font-size: 12px; color: var(--muted); margin: 2px 0 0; }
+  #status.ok { color: var(--ok); }
+  #status.warn { color: var(--warn); }
+
+  button {
+    appearance: none; font-family: inherit; cursor: pointer;
+    background: var(--chip); color: var(--text);
+    border: 1px solid var(--line); border-radius: 12px;
+  }
+  button:active { transform: scale(.985); }
+
+  #fs { padding: 10px 14px; font-size: 13px; white-space: nowrap; }
+
+  .label { font-size: 11px; letter-spacing: .8px; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+
+  .profiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .profiles button {
+    padding: 10px 6px 11px;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    font-size: 12px; line-height: 1.25; text-align: center;
+  }
+  .profiles button[aria-pressed="true"] { border-color: #fff; box-shadow: inset 0 0 0 1px #fff; }
+  .dot { width: 22px; height: 22px; border-radius: 50%; border: 1px solid rgba(255,255,255,.35); }
+
+  .sliders { margin-top: 16px; }
+  .slider + .slider { margin-top: 12px; }
+  .slider .row { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; }
+  .slider .name { color: var(--muted); letter-spacing: .4px; }
+  .slider .val { font-variant-numeric: tabular-nums; color: var(--text); }
+  .slider .val small { color: var(--muted); font-size: 11px; margin-left: 6px; }
+
+  input[type=range] { width: 100%; appearance: none; background: transparent; margin: 4px 0 0; height: 26px; }
+  input[type=range]::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; }
+  input[type=range]::-webkit-slider-thumb {
+    appearance: none; width: 24px; height: 24px; border-radius: 50%;
+    background: #fff; border: none; margin-top: -9px; box-shadow: 0 2px 8px rgba(0,0,0,.55);
+  }
+  input[type=range]::-moz-range-track { height: 6px; border-radius: 3px; }
+  input[type=range]::-moz-range-thumb { width: 24px; height: 24px; border: none; border-radius: 50%; background: #fff; }
+  #r::-webkit-slider-runnable-track { background: linear-gradient(90deg, #1b1b20, #ff4a4a); }
+  #g::-webkit-slider-runnable-track { background: linear-gradient(90deg, #1b1b20, #49e06a); }
+  #b::-webkit-slider-runnable-track { background: linear-gradient(90deg, #1b1b20, #4a9dff); }
+  #r::-moz-range-track { background: linear-gradient(90deg, #1b1b20, #ff4a4a); }
+  #g::-moz-range-track { background: linear-gradient(90deg, #1b1b20, #49e06a); }
+  #b::-moz-range-track { background: linear-gradient(90deg, #1b1b20, #4a9dff); }
+
+  .foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 14px; }
+  .foot p { margin: 0; font-size: 11px; color: #70707a; }
+  #reset { padding: 8px 12px; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<div id="ui">
+  <section id="panel">
+    <div class="head">
+      <div>
+        <h1>Lightbox</h1>
+        <p id="status">Képernyő ébren tartása indul…</p>
+      </div>
+      <button id="fs" type="button">Teljes képernyő</button>
+    </div>
+
+    <p class="label">Színprofil</p>
+    <div class="profiles" id="profiles">
+      <button type="button" data-p="bw"><span class="dot" style="background:rgb(255,255,255)"></span>Fekete-fehér</button>
+      <button type="button" data-p="neg"><span class="dot" style="background:rgb(180,220,255)"></span>Színes negatív</button>
+      <button type="button" data-p="slide"><span class="dot" style="background:rgb(255,244,224)"></span>Dia</button>
+    </div>
+
+    <div class="sliders">
+      <p class="label">RGB finomhangolás</p>
+      <div class="slider">
+        <div class="row"><span class="name">Piros</span><span class="val" id="rVal">100%<small>255</small></span></div>
+        <input type="range" id="r" min="0" max="100" step="1" value="100" aria-label="Piros">
+      </div>
+      <div class="slider">
+        <div class="row"><span class="name">Zöld</span><span class="val" id="gVal">100%<small>255</small></span></div>
+        <input type="range" id="g" min="0" max="100" step="1" value="100" aria-label="Zöld">
+      </div>
+      <div class="slider">
+        <div class="row"><span class="name">Kék</span><span class="val" id="bVal">100%<small>255</small></span></div>
+        <input type="range" id="b" min="0" max="100" step="1" value="100" aria-label="Kék">
+      </div>
+    </div>
+
+    <div class="foot">
+      <p>A menü 3 mp tétlenség után eltűnik. Érintésre visszajön.</p>
+      <button id="reset" type="button">Alap</button>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var PRESETS = {
+    bw:    [100, 100, 100],
+    neg:   [71, 86, 100],
+    slide: [100, 96, 88]
+  };
+  var IDLE_MS = 3000;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var panel = $('panel'), statusEl = $('status');
+  var inputs = { r: $('r'), g: $('g'), b: $('b') };
+  var vals = { r: $('rVal'), g: $('gVal'), b: $('bVal') };
+
+  var state = { r: 100, g: 100, b: 100 };
+  try {
+    var saved = JSON.parse(localStorage.getItem('lightbox.rgb') || 'null');
+    if (saved) ['r', 'g', 'b'].forEach(function (k) {
+      if (typeof saved[k] === 'number' && saved[k] >= 0 && saved[k] <= 100) state[k] = saved[k];
+    });
+  } catch (e) {}
+
+  function to255(pct) { return Math.round(pct * 255 / 100); }
+
+  function apply() {
+    var c = 'rgb(' + to255(state.r) + ',' + to255(state.g) + ',' + to255(state.b) + ')';
+    document.documentElement.style.background = c;
+    document.body.style.background = c;
+    ['r', 'g', 'b'].forEach(function (k) {
+      if (inputs[k].value !== String(state[k])) inputs[k].value = state[k];
+      vals[k].innerHTML = state[k] + '%<small>' + to255(state[k]) + '</small>';
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('#profiles button'), function (btn) {
+      var p = PRESETS[btn.dataset.p];
+      btn.setAttribute('aria-pressed', String(p[0] === state.r && p[1] === state.g && p[2] === state.b));
+    });
+    try { localStorage.setItem('lightbox.rgb', JSON.stringify(state)); } catch (e) {}
+  }
+
+  ['r', 'g', 'b'].forEach(function (k) {
+    inputs[k].addEventListener('input', function () {
+      state[k] = parseInt(inputs[k].value, 10) || 0;
+      apply();
+    });
+  });
+
+  $('profiles').addEventListener('click', function (e) {
+    var btn = e.target.closest('button'); if (!btn) return;
+    var p = PRESETS[btn.dataset.p];
+    state.r = p[0]; state.g = p[1]; state.b = p[2];
+    apply();
+  });
+
+  $('reset').addEventListener('click', function () {
+    state.r = state.g = state.b = 100; apply();
+  });
+
+  /* ---------- képernyő ébren tartása ---------- */
+  var lock = null;
+
+  function setStatus(text, cls) {
+    statusEl.textContent = text;
+    statusEl.className = cls || '';
+  }
+
+  function requestWakeLock() {
+    if (!('wakeLock' in navigator)) {
+      setStatus('Nincs Wake Lock – állítsd az Automatikus zárolást Soha értékre.', 'warn');
+      return;
+    }
+    navigator.wakeLock.request('screen').then(function (l) {
+      lock = l;
+      setStatus('A képernyő ébren van tartva.', 'ok');
+      lock.addEventListener('release', function () {
+        lock = null;
+        setStatus('Koppints a képernyőre az ébren tartáshoz.', 'warn');
+      });
+    }).catch(function () {
+      setStatus('Koppints a képernyőre az ébren tartáshoz.', 'warn');
+    });
+  }
+
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible' && !lock) requestWakeLock();
+  });
+
+  /* ---------- teljes képernyő ---------- */
+  var fsBtn = $('fs');
+  var docEl = document.documentElement;
+
+  function fsActive() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+
+  function syncFsLabel() {
+    fsBtn.textContent = fsActive() ? 'Kilépés' : 'Teljes képernyő';
+  }
+
+  fsBtn.addEventListener('click', function () {
+    if (!fsActive()) {
+      var req = docEl.requestFullscreen || docEl.webkitRequestFullscreen;
+      if (req) {
+        var p = req.call(docEl);
+        if (p && p.catch) p.catch(function () {});
+      } else {
+        setStatus('Teljes képernyő: tedd ki a Főképernyőre, úgy sávok nélkül indul.', 'warn');
+      }
+    } else {
+      var exit = document.exitFullscreen || document.webkitExitFullscreen;
+      if (exit) {
+        var q = exit.call(document);
+        if (q && q.catch) q.catch(function () {});
+      }
+    }
+    setTimeout(syncFsLabel, 150);
+  });
+  document.addEventListener('fullscreenchange', syncFsLabel);
+  document.addEventListener('webkitfullscreenchange', syncFsLabel);
+
+  /* ---------- UI automatikus elrejtése ---------- */
+  var idleTimer = null;
+
+  function hideUI() { document.body.classList.add('hidden-ui'); }
+
+  function showUI() {
+    document.body.classList.remove('hidden-ui');
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(hideUI, IDLE_MS);
+  }
+
+  /* Ha a menü rejtve van, az első érintés csak visszahozza – nem nyom meg gombot,
+     mert a #ui ilyenkor pointer-events: none, az esemény a dokumentumig jut. */
+  ['pointerdown', 'touchstart', 'mousemove', 'keydown', 'wheel'].forEach(function (ev) {
+    document.addEventListener(ev, showUI, { passive: true });
+  });
+  document.addEventListener('input', showUI, { passive: true });
+
+  /* dupla koppintásos nagyítás és gesztus-zoom kikapcsolása */
+  document.addEventListener('gesturestart', function (e) { e.preventDefault(); });
+  document.addEventListener('dblclick', function (e) { e.preventDefault(); });
+  panel.addEventListener('pointerdown', function (e) { e.stopPropagation(); showUI(); });
+
+  apply();
+  showUI();
+  requestWakeLock();
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('sw.js').catch(function () {});
+    });
+  }
+})();
+</script>
+</body>
+</html>
