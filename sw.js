@@ -1,7 +1,7 @@
 /* Lightbox – DSLR film szkennelés: offline app shell.
    Navigáció és HTML: hálózat először (hogy a frissítés azonnal megérkezzen),
    offline esetén a gyorsítótárból. Ikonok, manifest: gyorsítótár először. */
-var CACHE = 'lightbox-v3';
+var CACHE = 'lightbox-v4';
 var ASSETS = [
   './',
   './index.html',

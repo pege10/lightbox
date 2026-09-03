@@ -111,6 +111,23 @@
   #g::-moz-range-track { background: linear-gradient(90deg, #1b1b20, #49e06a); }
   #b::-moz-range-track { background: linear-gradient(90deg, #1b1b20, #4a9dff); }
 
+  #keepawake {
+    position: fixed; left: 0; bottom: 0;
+    width: 3px; height: 3px; opacity: .02;
+    pointer-events: none; z-index: 1;
+  }
+
+  #diag {
+    margin-top: 14px; padding-top: 12px;
+    border-top: 1px solid var(--line);
+    font: 11px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: #7d7d88;
+    white-space: pre-wrap;
+  }
+  #diag b { color: var(--text); font-weight: 600; }
+  #diag .bad { color: var(--warn); }
+  #diag .good { color: var(--ok); }
+
   .foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 14px; }
   .foot p { margin: 0; font-size: 11px; color: #70707a; }
   #reset { padding: 8px 12px; font-size: 12px; }
@@ -161,12 +178,19 @@
       <p>A menü 3 mp tétlenség után eltűnik. Érintésre visszajön.</p>
       <button id="reset" type="button">Alap</button>
     </div>
+
+    <div id="diag">Diagnosztika…</div>
   </section>
 </div>
+
+<video id="keepawake" playsinline muted loop preload="auto" disablepictureinpicture
+       src="data:video/mp4;base64,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"></video>
 
 <script>
 (function () {
   'use strict';
+
+  var BUILD = 'v4 – 2026-09-03';
 
   var PRESETS = {
     bw:    [100, 100, 100],
@@ -230,43 +254,76 @@
     state.r = state.g = state.b = state.br = 100; apply();
   });
 
-  /* ---------- képernyő ébren tartása ---------- */
-  var lock = null, wlPending = false;
+  /* ---------- képernyő ébren tartása ----------
+     Két réteg: Screen Wake Lock API (iOS 16.4+), és mellette egy néma, 3 px-es
+     hurokvideó, ami a régebbi/korlátozott esetekben tartja ébren a kijelzőt. */
+  var lock = null, wlPending = false, wlError = '';
+  var video = $('keepawake'), videoOn = false;
 
   function setStatus(text, cls) {
     statusEl.textContent = text;
     statusEl.className = cls || '';
   }
 
+  function awakeStatus() {
+    if (lock) setStatus('A képernyő ébren van tartva.', 'ok');
+    else if (videoOn) setStatus('Ébren tartás videós tartalékkal.', 'ok');
+    else setStatus('Koppints a képernyőre az ébren tartáshoz.', 'warn');
+    updateDiag();
+  }
+
   function requestWakeLock() {
-    if (!('wakeLock' in navigator)) {
-      setStatus('Nincs Wake Lock – állítsd az Automatikus zárolást Soha értékre.', 'warn');
-      return;
-    }
+    if (!('wakeLock' in navigator)) { wlError = 'nincs API'; awakeStatus(); return; }
     if (lock || wlPending || document.visibilityState !== 'visible') return;
     wlPending = true;
     navigator.wakeLock.request('screen').then(function (l) {
-      wlPending = false;
+      wlPending = false; wlError = '';
       lock = l;
-      setStatus('A képernyő ébren van tartva.', 'ok');
-      lock.addEventListener('release', function () {
-        lock = null;
-        setStatus('Koppints a képernyőre az ébren tartáshoz.', 'warn');
-      });
-    }).catch(function () {
+      lock.addEventListener('release', function () { lock = null; awakeStatus(); });
+      awakeStatus();
+    }).catch(function (e) {
       wlPending = false;
-      setStatus('Koppints a képernyőre az ébren tartáshoz.', 'warn');
+      wlError = (e && e.name) ? e.name : 'hiba';
+      awakeStatus();
     });
   }
 
+  function startVideo() {
+    if (!video || videoOn) return;
+    var p;
+    try { p = video.play(); } catch (e) { return; }
+    if (p && p.then) {
+      p.then(function () { videoOn = true; awakeStatus(); })
+       .catch(function () { videoOn = false; updateDiag(); });
+    } else {
+      videoOn = !video.paused; awakeStatus();
+    }
+  }
+
+  if (video) {
+    video.addEventListener('pause', function () { videoOn = false; updateDiag(); });
+    video.addEventListener('playing', function () { videoOn = true; awakeStatus(); });
+  }
+
+  function keepAwake() { requestWakeLock(); startVideo(); }
+
   document.addEventListener('visibilitychange', function () {
-    if (document.visibilityState === 'visible') requestWakeLock();
+    if (document.visibilityState === 'visible') keepAwake();
+  });
+  window.addEventListener('focus', keepAwake);
+  window.addEventListener('pageshow', keepAwake);
+
+  /* ha az első kérés elbukott (pl. felhasználói gesztus nélkül), érintésre újra */
+  ['pointerdown', 'keydown'].forEach(function (ev) {
+    document.addEventListener(ev, keepAwake, { passive: true });
   });
 
-  /* ha az első kérés elbukott (pl. gesztus nélkül), érintésre újrapróbáljuk */
-  ['pointerdown', 'keydown'].forEach(function (ev) {
-    document.addEventListener(ev, function () { requestWakeLock(); }, { passive: true });
-  });
+  /* rendszeres ellenőrzés: ha bármelyik réteg leállt, újraindítjuk */
+  setInterval(function () {
+    if (document.visibilityState !== 'visible') return;
+    if (!lock) requestWakeLock();
+    if (video && video.paused) startVideo();
+  }, 10000);
 
   /* ---------- teljes képernyő ---------- */
   var fsBtn = $('fs');
@@ -322,9 +379,49 @@
   document.addEventListener('dblclick', function (e) { e.preventDefault(); });
   panel.addEventListener('pointerdown', function (e) { e.stopPropagation(); showUI(); });
 
+  /* ---------- diagnosztika ---------- */
+  var diagEl = $('diag');
+
+  function displayMode() {
+    var modes = ['fullscreen', 'standalone', 'minimal-ui', 'browser'];
+    for (var i = 0; i < modes.length; i++) {
+      if (window.matchMedia('(display-mode: ' + modes[i] + ')').matches) return modes[i];
+    }
+    return navigator.standalone ? 'standalone (iOS)' : 'ismeretlen';
+  }
+
+  function safeAreaTop() {
+    var probe = document.createElement('div');
+    probe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:env(safe-area-inset-top,0px);visibility:hidden;';
+    document.body.appendChild(probe);
+    var h = Math.round(probe.getBoundingClientRect().height);
+    probe.parentNode.removeChild(probe);
+    return h;
+  }
+
+  function updateDiag() {
+    if (!diagEl) return;
+    var mode = displayMode();
+    var top = safeAreaTop();
+    var wl = lock ? '<span class="good">aktív</span>'
+           : (('wakeLock' in navigator) ? '<span class="bad">nem aktív' + (wlError ? ' (' + wlError + ')' : '') + '</span>'
+                                        : '<span class="bad">nincs API</span>');
+    var vid = videoOn ? '<span class="good">fut</span>' : '<span class="bad">áll</span>';
+    diagEl.innerHTML =
+      'Mód: <b>' + mode + '</b>' +
+      (mode === 'browser' ? '  <span class="bad">(tedd ki a főképernyőre)</span>' : '') + '\n' +
+      'Felső biztonsági zóna: <b>' + top + 'px</b> ' + (top > 0 ? '(a tartalom a sáv alá fut)' : '(a rendszer külön sávot tart fenn)') + '\n' +
+      'Wake Lock: ' + wl + '   Videó: ' + vid + '\n' +
+      'Ablak: <b>' + window.innerWidth + '×' + window.innerHeight + '</b>  Képernyő: <b>' + screen.width + '×' + screen.height + '</b>\n' +
+      'Build: <b>' + BUILD + '</b>';
+  }
+
+  window.addEventListener('resize', updateDiag);
+
   apply();
   showUI();
-  requestWakeLock();
+  updateDiag();
+  keepAwake();
 
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () {
