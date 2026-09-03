@@ -190,7 +190,7 @@
 (function () {
   'use strict';
 
-  var BUILD = 'v4 – 2026-09-03';
+  var BUILD = 'v5 – 2026-09-03';
 
   var PRESETS = {
     bw:    [100, 100, 100],
@@ -424,8 +424,18 @@
   keepAwake();
 
   if ('serviceWorker' in navigator) {
+    /* ha új verzió veszi át az irányítást, egyszer újratöltünk, hogy tényleg
+       a friss app fusson (a GitHub Pages 10 percig cache-eli a HTML-t) */
+    var hadController = !!navigator.serviceWorker.controller, reloading = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      if (!hadController || reloading) return;
+      reloading = true;
+      location.reload();
+    });
     window.addEventListener('load', function () {
-      navigator.serviceWorker.register('sw.js').catch(function () {});
+      navigator.serviceWorker.register('sw.js').then(function (reg) {
+        reg.update();
+      }).catch(function () {});
     });
   }
 })();

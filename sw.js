@@ -1,7 +1,7 @@
 /* Lightbox – DSLR film szkennelés: offline app shell.
    Navigáció és HTML: hálózat először (hogy a frissítés azonnal megérkezzen),
    offline esetén a gyorsítótárból. Ikonok, manifest: gyorsítótár először. */
-var CACHE = 'lightbox-v4';
+var CACHE = 'lightbox-v5';
 var ASSETS = [
   './',
   './index.html',
@@ -15,7 +15,10 @@ var ASSETS = [
 self.addEventListener('install', function (e) {
   e.waitUntil(
     caches.open(CACHE)
-      .then(function (c) { return c.addAll(ASSETS); })
+      .then(function (c) {
+        /* cache: 'reload' – a GitHub Pages max-age=600 miatt különben régi másolat kerülne be */
+        return c.addAll(ASSETS.map(function (u) { return new Request(u, { cache: 'reload' }); }));
+      })
       .then(function () { return self.skipWaiting(); })
   );
 });
@@ -42,7 +45,7 @@ self.addEventListener('fetch', function (e) {
 
   if (isDoc) {
     e.respondWith(
-      fetch(req).then(function (res) {
+      fetch(req, { cache: 'reload' }).then(function (res) {
         putInCache(req, res);
         return res;
       }).catch(function () {
