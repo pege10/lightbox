@@ -15,8 +15,11 @@ felület marad.
   - Fekete-fehér: tiszta fehér, RGB 255 / 255 / 255
   - Színes negatív: hideg ciánkék, RGB 181 / 219 / 255 – ellensúlyozza a film narancs maszkját
   - Dia: enyhén meleg fehér, RGB 255 / 245 / 224
-- **RGB finomhangolás** – három csúszka, 0–100%, mellette a tényleges 0–255 érték,
-  hogy egy beállítás később pontosan visszaállítható legyen.
+- **Fényerő** – közös csúszka 5–100%, alapból maximumon. Arányosan skálázza mind a három
+  csatornát, így a színegyensúly nem változik. (A kijelző hardveres fényerejét egy weblap
+  nem tudja állítani, ez a megjelenített színt halványítja.)
+- **RGB finomhangolás** – három csúszka, 0–100%, mellette a fényerővel együtt kiszámolt
+  tényleges 0–255 érték, hogy egy beállítás később pontosan visszaállítható legyen.
 - **Auto-hide** – 3 mp tétlenség után a teljes UI kihalványodik; bármilyen érintésre
   azonnal visszajön. Rejtett menü mellett az első koppintás csak előhozza a menüt,
   gombot nem nyom meg.
@@ -28,6 +31,25 @@ A beállítások a telefonon maradnak (localStorage), újranyitáskor visszajön
 
 Nyisd meg a linket Safariban, majd Megosztás → **Főképernyőhöz adás**.
 Onnantól ikonról indul, böngészősáv nélkül, offline is.
+
+## A felső státuszsáv (óra, térerő, akku)
+
+iOS nem ad rá API-t, hogy egy webapp elrejtse a státuszsávot – ezt csak natív app tudja.
+Amit az app megtesz:
+
+- `apple-mobile-web-app-status-bar-style: black-translucent` – a tartalom a státuszsáv alá
+  fut, nincs külön sáv, és a sáv ikonjai világosak;
+- nincs `theme-color`, hogy semmi ne írja felül ezt a viselkedést;
+- a manifestben `"display": "fullscreen"` (`display_override`-fal) – Androidon ettől tényleg
+  eltűnik a sáv, iOS jelenleg standalone-ként kezeli.
+
+Ha iOS-en így is látszik az óra és a térerő, a bevált megoldás az **Irányított hozzáférés**
+(Beállítások → Kisegítő lehetőségek → Irányított hozzáférés). Bekapcsolás után az appban
+az oldalgomb háromszori nyomására indul, ilyenkor a rendszer elrejti a státuszsávot, és
+egyben az érintéseket is letiltja, tehát szkennelés közben nem lehet véletlenül kilépni.
+
+Fontos: iOS a manifestet a **főképernyőhöz adás pillanatában** olvassa be. Ha frissült az
+app, töröld a főképernyőről az ikont, és add hozzá újra, különben a régi beállításokkal indul.
 
 ## Szkenneléshez
 
