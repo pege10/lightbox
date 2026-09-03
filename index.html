@@ -217,7 +217,7 @@
   });
 
   /* ---------- képernyő ébren tartása ---------- */
-  var lock = null;
+  var lock = null, wlPending = false;
 
   function setStatus(text, cls) {
     statusEl.textContent = text;
@@ -229,7 +229,10 @@
       setStatus('Nincs Wake Lock – állítsd az Automatikus zárolást Soha értékre.', 'warn');
       return;
     }
+    if (lock || wlPending || document.visibilityState !== 'visible') return;
+    wlPending = true;
     navigator.wakeLock.request('screen').then(function (l) {
+      wlPending = false;
       lock = l;
       setStatus('A képernyő ébren van tartva.', 'ok');
       lock.addEventListener('release', function () {
@@ -237,12 +240,18 @@
         setStatus('Koppints a képernyőre az ébren tartáshoz.', 'warn');
       });
     }).catch(function () {
+      wlPending = false;
       setStatus('Koppints a képernyőre az ébren tartáshoz.', 'warn');
     });
   }
 
   document.addEventListener('visibilitychange', function () {
-    if (document.visibilityState === 'visible' && !lock) requestWakeLock();
+    if (document.visibilityState === 'visible') requestWakeLock();
+  });
+
+  /* ha az első kérés elbukott (pl. gesztus nélkül), érintésre újrapróbáljuk */
+  ['pointerdown', 'keydown'].forEach(function (ev) {
+    document.addEventListener(ev, function () { requestWakeLock(); }, { passive: true });
   });
 
   /* ---------- teljes képernyő ---------- */
